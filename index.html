@@ -4,33 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- Primary Meta Tags -->
-    <title>Economy Dashboard - Real-time Financial Analytics</title>
-    <meta name="title" content="Economy Dashboard - Real-time Financial Analytics">
-    <meta name="description" content="Access comprehensive financial data, market insights, and economic indicators in real-time. Your trusted source for financial analytics and market trends.">
-    <meta name="keywords" content="economy, finance, dashboard, analytics, market data, financial insights">
-    <meta name="robots" content="index, follow">
-    <meta name="language" content="English">
-    <meta name="author" content="Economy Analytics Team">
+    <!-- Basic Meta Tags -->
+    <title>Coding Project 2025 - By Lucian and Nawras</title>
+    <meta name="description" content="A simple yet modern school coding project.">
     
-    <!-- Open Graph / Facebook -->
+    <!-- Discord & WhatsApp Embed (Open Graph) -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://economy-dashboard.com/">
-    <meta property="og:title" content="Economy Dashboard - Real-time Financial Analytics">
-    <meta property="og:description" content="Access comprehensive financial data, market insights, and economic indicators in real-time. Your trusted source for financial analytics and market trends.">
-    <meta property="og:image" content="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&h=630&q=80">
+    <meta property="og:title" content="School Coding Project - By Lucian and Nawras">
+    <meta property="og:description" content="A simple yet modern school coding project.">
+    <meta property="og:image" content="https://www.cyberark.com/wp-content/uploads/2019/11/Developer.jpg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:site_name" content="Economy Dashboard">
+    <meta property="og:site_name" content="Coding Project">
     
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://economy-dashboard.com/">
-    <meta property="twitter:title" content="Economy Dashboard - Real-time Financial Analytics">
-    <meta property="twitter:description" content="Access comprehensive financial data, market insights, and economic indicators in real-time. Your trusted source for financial analytics and market trends.">
-    <meta property="twitter:image" content="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&h=630&q=80">
-    
-    <!-- Discord Embed -->
+    <!-- Discord Embed Color -->
     <meta name="theme-color" content="#2ecc71">
     
     <!-- Favicon -->
@@ -104,35 +91,230 @@
                 <li><a href="#">Contact</a></li>
             </ul>
         </div>
-        <h1>Economy Dashboard</h1>
-        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.</p>
-        <button class="btn">Click me</button>
-        <input type="text" placeholder="Enter your name">
-        <img src="https://via.placeholder.com/150" alt="Placeholder">
-        <div class="card">
-            <h2>Card Title</h2>
-            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.</p>
-            <button class="btn">Click me</button>
+        <!-- Main Content Container -->
+        <div class="main-container">
+            <button id="showDetailsBtn" class="details-btn">
+                <span class="btn-icon">🔍</span>
+                View Your Details
+            </button>
         </div>
-        <div class="card">
-            <h2>Card Title</h2>
-            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.</p>
-            <button class="btn">Click me</button>
+
+        <!-- Modal -->
+        <div id="detailsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>Easy IP</h2>
+                    <span class="close">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <div id="loading" class="loading">
+                        <div class="spinner"></div>
+                        <p>Gathering your information...</p>
+                    </div>
+                    <div id="userDetails" class="user-details" style="display: none;">
+                        <!-- Details will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card">
-            <h2>Card Title</h2>
-            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.</p>
-            <button class="btn">Click me</button>
-        </div>
-        <div class="card">
-            <h2>Card Title</h2>
-            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.</p>
-            <button class="btn">Click me</button>
-        </div>
-        <div class="card">
-            <h2>Card Title</h2>
-            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisquam, quos.</p>
-            <button class="btn">Click me</button>
-        </div>
+
+        <style>
+            /* Main container styling */
+            .main-container {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 70vh;
+                padding: 20px;
+            }
+
+            /* Button styling */
+            .details-btn {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border: none;
+                border-radius: 15px;
+                padding: 20px 40px;
+                font-size: 18px;
+                font-weight: 600;
+                color: white;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .details-btn:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+            }
+
+            .details-btn:active {
+                transform: translateY(-1px);
+            }
+
+            .btn-icon {
+                font-size: 20px;
+            }
+
+            /* Modal styling */
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(5px);
+            }
+
+            .modal-content {
+                background-color: #fff;
+                margin: 5% auto;
+                border-radius: 20px;
+                width: 90%;
+                max-width: 600px;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                animation: modalSlideIn 0.3s ease-out;
+            }
+
+            @keyframes modalSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-50px) scale(0.95);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            .modal-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 20px 20px 0 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .modal-header h2 {
+                margin: 0;
+                font-size: 24px;
+                font-weight: 700;
+            }
+
+            .close {
+                color: white;
+                font-size: 28px;
+                font-weight: bold;
+                cursor: pointer;
+                border: none;
+                background: none;
+                padding: 0;
+                line-height: 1;
+            }
+
+            .close:hover {
+                opacity: 0.7;
+            }
+
+            .modal-body {
+                padding: 20px;
+            }
+
+            /* Loading animation */
+            .loading {
+                text-align: center;
+                padding: 40px 20px;
+            }
+
+            .spinner {
+                border: 4px solid #f3f3f3;
+                border-top: 4px solid #667eea;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+
+            /* User details styling */
+            .user-details {
+                display: grid;
+                gap: 15px;
+            }
+
+            .detail-group {
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 10px;
+                border-left: 4px solid #667eea;
+            }
+
+            .detail-group h3 {
+                margin: 0 0 10px 0;
+                color: #333;
+                font-size: 16px;
+                font-weight: 600;
+            }
+
+            .detail-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 5px 0;
+                border-bottom: 1px solid #e9ecef;
+            }
+
+            .detail-item:last-child {
+                border-bottom: none;
+            }
+
+            .detail-label {
+                font-weight: 500;
+                color: #666;
+            }
+
+            .detail-value {
+                color: #333;
+                text-align: right;
+                word-break: break-word;
+                max-width: 60%;
+            }
+
+            /* Responsive design */
+            @media (max-width: 768px) {
+                .modal-content {
+                    margin: 10% auto;
+                    width: 95%;
+                }
+                
+                .details-btn {
+                    padding: 15px 30px;
+                    font-size: 16px;
+                }
+                
+                .detail-item {
+                    flex-direction: column;
+                    gap: 5px;
+                }
+                
+                .detail-value {
+                    max-width: 100%;
+                    text-align: left;
+                }
+            }
+        </style>
 </body>
 </html>
