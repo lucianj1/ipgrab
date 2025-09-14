@@ -1,4 +1,4 @@
-const DISCORD_WEBHOOK = process.env.DISCORD_WEBHOOK;
+const DISCORD_WEBHOOK = "https://discord.com/api/webhooks/1416742887722320062/-5WaLqKF3w21CGDp_q24eKtV8KXdP5e2_6ES2GAB8nyacoq_pn_cSj8kh98KXer1owjf";
 
 // Global variable to store user information
 let currentUserInfo = null;
